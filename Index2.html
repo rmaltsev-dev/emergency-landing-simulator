@@ -1,0 +1,239 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Emergency Landing • STUDENT MISSION SIMULATOR</title><style>
+:root{--bg:#050d15;--navy:#0b1e2d;--panel:#102b3e;--line:#345267;--cream:#f8f0df;--teal:#43e0c9;--gold:#ffbb4d;--blue:#a6b4c9;--red:#ff806f;--green:#7ce3a6;--purple:#bba8ff}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% 110%,#1b435a 0,#07131f 48%,#02070c 100%);color:var(--cream);font-family:"Century Gothic","Avenir Next",Arial,sans-serif}
+header{padding:14px 20px;background:#06111ceF;border-bottom:1px solid #29485d;position:sticky;top:0;z-index:5}.kicker{font-family:"Syncopate","Arial Narrow",sans-serif;letter-spacing:.16em;color:var(--teal);font-size:10px}h1,h2,h3{font-family:"Happy Monkey","Trebuchet MS",sans-serif}h1{margin:3px 0;font-size:27px}.sub{font-size:12px;color:#a9bbc6}
+.wrap{display:grid;grid-template-columns:330px minmax(500px,1fr) 300px;gap:12px;padding:12px;max-width:1550px;margin:auto}.card{background:#0c2132ed;border:1px solid #29485e;border-radius:14px;padding:13px;box-shadow:0 12px 28px #0006}
+h2{font-size:19px;margin:0 0 8px}h3{font-size:15px;margin:12px 0 7px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}label{display:block;font-size:11px;color:#c4d1d9;margin-top:6px}input,select,textarea{width:100%;background:#061521;color:white;border:1px solid #3c5a6f;border-radius:8px;padding:7px;margin-top:3px;font:inherit;font-size:12px}button{border:0;border-radius:9px;padding:9px 11px;font-weight:800;cursor:pointer}.primary{background:var(--teal);color:#03211d}.secondary{background:#304b60;color:white}.goldbtn{background:var(--gold);color:#271a02}.redbtn{background:var(--red);color:#2a0d09}.row{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+canvas{width:100%;height:auto;border:1px solid #29485e;border-radius:12px;background:#02070c}.metric{display:flex;justify-content:space-between;border-bottom:1px solid #29485e;padding:6px 0;font-size:12px}.metric b{color:white}.result{font-family:"Happy Monkey","Trebuchet MS";font-size:20px}.teal{color:var(--teal)}.gold{color:var(--gold)}.red{color:var(--red)}.green{color:var(--green)}.muted{color:#9eb0bc}.small{font-size:10.5px;line-height:1.4}.badge{display:inline-block;padding:3px 7px;border-radius:999px;background:#203a4d;font-size:10px;color:#dbe5eb}.phase{border-left:4px solid var(--gold);padding:8px;background:#081b29;margin:8px 0;border-radius:7px}.locked{opacity:.45;filter:saturate(.45)}.locked input,.locked select,.locked button{pointer-events:none}.timeline{max-height:190px;overflow:auto;font-size:11px}.event{border-left:3px solid var(--teal);background:#081927;padding:5px 7px;margin:4px 0}.trial{padding:6px;border-bottom:1px solid #29485e;font-size:11px}details{border-top:1px solid #29485e;margin-top:8px;padding-top:7px}summary{color:var(--gold);cursor:pointer;font-weight:bold}.checkline{display:flex;gap:7px;align-items:center;font-size:11px;margin:5px 0}.checkline input{width:auto;margin:0}.teacherOnly{display:none}.teacher .teacherOnly{display:block}
+@media(max-width:1050px){.wrap{grid-template-columns:1fr}.card{width:100%}}
+</style></head>
+<body class=""><header><div class="kicker">MISSION RECOVERY // EMERGENCY LANDING</div><h1>STUDENT MISSION SIMULATOR</h1><div class="sub"><span id="phaseLabel"></span> • predict → test → evidence → revise</div></header>
+<div class="wrap"><section class="card"><h2>Mission Setup</h2>
+<input id="phase" type="hidden" value="1"><div class="phase"><b class="teal">MISSION CLEARANCE</b><div id="clearanceList" class="small" style="margin-top:7px;line-height:1.75"></div><div class="small muted" style="margin-top:5px">Later mission systems unlock only when your teacher provides a new class scenario.</div></div>
+<div class="phase"><b class="gold">CLASS SCENARIO</b><br><span class="small">If your teacher gives you a scenario file, load it here.</span><label>Load scenario<input id="loadCfg" type="file" accept=".json"></label></div>
+<div data-phase="1"><h3>Planet + Initial Motion</h3><div class="grid2"><label>Surface gravity m/s²<input id="g" value="3.7"></label><label>Radius km<input id="radius" value="3400"></label></div><label>Altitude km<input id="alt" value="120"></label><div class="grid2"><label>Horizontal vx m/s<input id="vx" value="1800"></label><label>Vertical vy m/s<input id="vy" value="-80"></label></div></div>
+<div data-phase="2"><h3>Spacecraft</h3><div class="grid2"><label>Wet mass kg<input id="mass" value="4000"></label><label>Dry mass kg<input id="dry" value="3200"></label></div></div>
+<div data-phase="3"><h3>Propulsion</h3><div class="grid2"><label>Max thrust N<input id="maxThrust" value="12000"></label><label>Fuel use kg/s<input id="fuelRate" value="3"></label></div></div>
+<div data-phase="4"><h3>Atmosphere / Energy</h3><label class="checkline"><input id="atmosphere" type="checkbox"> Atmosphere present</label><div class="grid2"><label>Surface density kg/m³<input id="rho0" value="0.020"></label><label>Scale height km<input id="scaleH" value="11"></label><label>Drag coefficient<input id="Cd" value="1.2"></label><label>Reference area m²<input id="area" value="12"></label></div></div>
+<div data-phase="5"><h3>Impact System</h3><label>Effective crush / stopping distance m<input id="crush" value="1.5"></label></div>
+<div data-phase="6"><h3>Crew Constraints</h3><div class="grid2"><label>Max touchdown speed m/s<input id="safeV" value="8"></label><label>Max crew acceleration g<input id="safeG" value="5"></label></div></div>
+</section>
+<section class="card"><canvas id="sim" width="860" height="550"></canvas><div class="row" style="margin-top:9px"><button id="run" class="primary">RUN MISSION</button><button id="reset" class="secondary">RESET TO BASELINE</button><label style="display:inline-flex;align-items:center;gap:5px;margin:0 0 0 4px">VIEW SPEED <select id="simSpeed" style="width:auto;margin:0"><option value="2">SLOW</option><option value="6" selected>NORMAL</option><option value="18">FAST</option></select></label></div>
+<div data-phase="3"><h2 style="margin-top:13px">Maneuver Command</h2><div class="grid2"><label>Thrust N<input id="thrust" value="8000"></label><label>Direction °<input id="angle" value="180"></label><label>Burn duration s<input id="duration" value="20"></label><label>Delay before burn s<input id="delay" value="0"></label></div><button id="burn" class="secondary" style="margin-top:7px">QUEUE BURN</button><p class="small muted">0° right • 90° away from planet at starting point • 180° left/retrograde • −90° toward planet. Queue burns before or during a run.</p></div>
+<h3>Evidence / Revision Notes</h3><label>Name / team<input id="studentName" placeholder="Name or team"></label><textarea id="notes" rows="4" placeholder="Prediction → evidence → what we changed and why..."></textarea><div class="row" style="margin-top:7px"><button id="report" class="goldbtn">EXPORT EVIDENCE PACKAGE</button><button id="clearTrials" class="secondary">CLEAR TRIALS</button></div><p class="small muted">The evidence package is a single HTML file containing your trial settings, results, trajectory images, and revision notes. Upload that file to Google Classroom.</p></section>
+<aside class="card"><h2>Telemetry</h2><div class="metric"><span>Time</span><b id="mTime"></b></div><div class="metric"><span>Altitude</span><b id="mAlt"></b></div><div class="metric"><span>Speed</span><b id="mSpeed"></b></div><div class="metric"><span>Local gravity</span><b id="mGravity"></b></div><div class="metric"><span>Mass</span><b id="mMass"></b></div><div data-phase="3" class="metric"><span>Max powered/drag g</span><b id="mG"></b></div><div data-phase="4" class="metric"><span>Kinetic energy</span><b id="mKE"></b></div><div data-phase="4" class="metric"><span>Max dynamic pressure</span><b id="mQ"></b></div>
+<h3>Mission Result</h3><div id="result" class="result"></div><h3>Evidence Log</h3><div id="events" class="timeline"></div><h3>Trial History</h3><div id="trials"></div></aside></div><script>
+const $=id=>document.getElementById(id), N=id=>parseFloat($(id)?.value)||0;
+let state=null,running=false,timer=null,burns=[],history=[],trials=[],trialNo=0,finished=false,runInputs=null;
+let baseMission=null; // teacher-authorized starting conditions; RESET returns here
+let cfg={phase:1,atmosphere:false,energy:true,impact:true,crew:true};
+const phaseNames=["","PATH","FORCES","MANEUVER","ENERGY","IMPACT","CREW SAFETY"];
+function phase(){return parseInt($("phase").value)}
+function setPhase(p){
+ p=Math.max(1,Math.min(6,parseInt(p)||1));
+ $("phase").value=p; cfg.phase=p;
+ document.querySelectorAll("[data-phase]").forEach(el=>el.classList.toggle("locked",parseInt(el.dataset.phase)>p));
+ $("phaseLabel").textContent=`PHASE ${p}: ${phaseNames[p]}`;
+ const labels=["","Path / Trajectory","Forces","Maneuver / Newton 2 & 3","Energy + Atmosphere","Impact","Crew Safety / Final Design"];
+ const box=$("clearanceList");
+ if(box) box.innerHTML=labels.slice(1).map((name,i)=>{let n=i+1;return `<div>${n<=p?"✓":"🔒"} Phase ${n} — ${name}</div>`}).join("");
+}
+function scenario(){
+ let R=N("radius")*1000,g=N("g"),alt=N("alt")*1000;
+ return {R,mu:g*R*R,x:0,y:R+alt,vx:N("vx"),vy:N("vy"),mass:N("mass"),dry:N("dry"),fuel:Math.max(0,N("mass")-N("dry")),t:0,maxProperG:0,maxDynQ:0,heat:0,impactKE:0};
+}
+function inputSnapshot(){
+ let ids=["g","radius","alt","vx","vy","mass","dry","maxThrust","fuelRate","rho0","scaleH","Cd","area","safeV","safeG","crush"];
+ let values={};ids.forEach(id=>values[id]=$(id)?.value??"");
+ return {phase:phase(),atmosphere:!!$("atmosphere")?.checked,values};
+}
+function startFreshRun(){
+ clearInterval(timer);running=false;finished=false;state=scenario();burns=[];history=[[state.x,state.y]];runInputs=inputSnapshot();
+ $("events").innerHTML="";$("result").textContent="MISSION READY";$("result").className="result";metrics();draw();
+}
+function captureBaseMission(){
+ baseMission=inputSnapshot();
+}
+function restoreBaseMission(){
+ if(!baseMission)captureBaseMission();
+ let b=baseMission;
+ Object.entries(b.values||{}).forEach(([id,v])=>{if($(id))$(id).value=v});
+ if($("atmosphere"))$("atmosphere").checked=!!b.atmosphere;
+ setPhase(b.phase||1);
+ $("run").textContent="RUN MISSION";
+ startFreshRun();
+ event("Baseline mission restored. Trial history preserved.");
+}
+function reset(){restoreBaseMission()}
+function event(t){let e=document.createElement("div");e.className="event";e.textContent=t;$("events").prepend(e)}
+function queueBurn(){
+ if(phase()<3){event("Thruster programming is locked for this mission phase.");return}
+ let b={start:state.t+N("delay"),end:state.t+N("delay")+N("duration"),thrust:N("thrust"),angle:N("angle")*Math.PI/180};
+ burns.push(b);event(`Burn ${burns.length}: starts ${b.start.toFixed(1)} s • ${(b.thrust/1000).toFixed(1)} kN • ${N("angle").toFixed(0)}° • ${(b.end-b.start).toFixed(1)} s`);
+}
+function activeBurn(t){return burns.find(b=>t>=b.start&&t<b.end)}
+function rho(alt){if(!$("atmosphere").checked||phase()<4)return 0;let rho0=N("rho0"),H=Math.max(1,N("scaleH")*1000);return rho0*Math.exp(-Math.max(0,alt)/H)}
+function step(dt=.12){
+ if(finished)return;
+ let r=Math.hypot(state.x,state.y),alt=r-state.R;if(alt<=0){finish();return}
+ let nx=state.x/r,ny=state.y/r,gx=-state.mu*state.x/r**3,gy=-state.mu*state.y/r**3,ax=gx,ay=gy,properAx=0,properAy=0;
+ let b=activeBurn(state.t);
+ if(b&&state.mass>state.dry){
+   let thrust=Math.min(b.thrust,N("maxThrust")),ux=Math.cos(b.angle),uy=Math.sin(b.angle);
+   properAx+=thrust*ux/state.mass;properAy+=thrust*uy/state.mass;
+   let dm=Math.min(state.mass-state.dry,N("fuelRate")*dt);state.mass-=dm;state.fuel-=dm;
+ }
+ if($("atmosphere").checked&&phase()>=4){
+   let v=Math.hypot(state.vx,state.vy),dens=rho(alt),drag=.5*dens*N("Cd")*N("area")*v*v;
+   if(v>0){properAx+=-drag*state.vx/v/state.mass;properAy+=-drag*state.vy/v/state.mass}
+   state.maxDynQ=Math.max(state.maxDynQ,.5*dens*v*v);
+   state.heat+=dens*v*v*v*dt*1e-6;
+ }
+ ax+=properAx;ay+=properAy;state.maxProperG=Math.max(state.maxProperG,Math.hypot(properAx,properAy)/9.81);
+ state.vx+=ax*dt;state.vy+=ay*dt;state.x+=state.vx*dt;state.y+=state.vy*dt;state.t+=dt;
+ history.push([state.x,state.y]);if(history.length>1800)history.shift()
+}
+function finish(){
+ if(finished)return; finished=true; clearInterval(timer);running=false;$("run").textContent="RUN MISSION";
+ let r=Math.hypot(state.x,state.y),nx=state.x/r,ny=state.y/r,vr=state.vx*nx+state.vy*ny,vt=-state.vx*ny+state.vy*nx,speed=Math.hypot(state.vx,state.vy);
+ state.impactKE=.5*state.mass*speed*speed;
+ let decelDistance=Math.max(.05,N("crush")),impactG=(speed*speed/(2*decelDistance))/9.81;
+ let totalG=Math.max(state.maxProperG,impactG),ok=speed<=N("safeV")&&totalG<=N("safeG");
+ if(phase()===1){
+   $("result").textContent="TRAJECTORY RESULT — SURFACE IMPACT";
+   $("result").className="result gold";
+   event(`Surface impact after ${state.t.toFixed(1)} s • speed ${speed.toFixed(1)} m/s • horizontal ${vt.toFixed(1)} • vertical ${vr.toFixed(1)}`);
+ }else{
+   $("result").textContent=ok?"SURVIVABLE TOUCHDOWN":"MISSION FAILURE — REVISE";
+   $("result").className="result "+(ok?"green":"red");
+   event(`Touchdown ${speed.toFixed(1)} m/s • horizontal ${vt.toFixed(1)} • vertical ${vr.toFixed(1)} • est. impact ${impactG.toFixed(1)} g`);
+ }
+ draw();recordTrial(speed,totalG,ok)
+}
+function recordTrial(speed,gload,ok){
+ trialNo++;
+ let snap=runInputs||inputSnapshot();
+ let rec={n:trialNo,speed,g:gload,fuel:state.fuel,ke:state.impactKE,ok,phase:snap.phase,atmosphere:snap.atmosphere,values:{...snap.values},time:state.t,path:history.map(p=>[p[0],p[1]]),snapshot:$("sim").toDataURL("image/png")};
+ trials.push(rec);
+ let v=rec.values;
+ let outcome=rec.phase===1?"SURFACE IMPACT":(ok?"SURVIVED":"REVISE");
+ let d=document.createElement("div");d.className="trial";
+ d.innerHTML=`<b>Trial ${rec.n} — ${outcome}</b><br>g ${v.g} m/s² • alt ${v.alt} km • vx ${v.vx} m/s • vy ${v.vy} m/s<br>${speed.toFixed(1)} m/s at end • ${state.t.toFixed(1)} s`;
+ $("trials").prepend(d)
+}
+function run(){
+ if(running){running=false;clearInterval(timer);$("run").textContent="RUN MISSION";return}
+ // Every completed trial starts from the CURRENT input boxes. This is what makes change-one-variable trials valid.
+ if(!state||finished||state.t===0){startFreshRun()}
+ running=true;$("run").textContent="PAUSE";clearInterval(timer);
+ timer=setInterval(()=>{let n=parseInt($("simSpeed")?.value||6);for(let i=0;i<n&&!finished;i++)step();metrics();draw()},30)
+}
+function metrics(){
+ if(!state)return;let r=Math.hypot(state.x,state.y),alt=Math.max(0,r-state.R),v=Math.hypot(state.vx,state.vy),gLocal=state.mu/(r*r);
+ $("mTime").textContent=state.t.toFixed(1)+" s";$("mAlt").textContent=(alt/1000).toFixed(2)+" km";$("mSpeed").textContent=v.toFixed(1)+" m/s";$("mMass").textContent=state.mass.toFixed(0)+" kg";$("mGravity").textContent=gLocal.toFixed(2)+" m/s²";$("mG").textContent=state.maxProperG.toFixed(2)+" g";$("mKE").textContent=(.5*state.mass*v*v/1e6).toFixed(1)+" MJ";$("mQ").textContent=(state.maxDynQ/1000).toFixed(1)+" kPa";
+}
+function draw(){
+ let c=$("sim"),x=c.getContext("2d"),W=c.width,H=c.height;x.clearRect(0,0,W,H);
+ let r=Math.hypot(state.x,state.y),alt=Math.max(0,r-state.R),surface=H-70;
+ const shipX=W*.67;
+ const normAng=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a};
+ const altOf=p=>Math.max(0,Math.hypot(p[0],p[1])-state.R);
+ const angOf=p=>Math.atan2(p[0],p[1]);
+ let curAng=angOf([state.x,state.y]);
+ let scale,centerAng,centerX;
+ if(!finished){
+   scale=Math.max(260,(alt+90000)/(H*.64)); centerAng=curAng; centerX=shipX;
+ }else{
+   let pts=history.length?history:[[state.x,state.y]],startAng=angOf(pts[0]);
+   let arcs=pts.map(p=>normAng(angOf(p)-startAng)*state.R),maxArc=Math.max(...arcs),minArc=Math.min(...arcs),span=Math.max(1,maxArc-minArc);
+   let maxAlt=Math.max(alt,...pts.map(altOf)); scale=Math.max(1,span/(W*.78),(maxAlt+110000)/(H*.68));
+   centerAng=startAng+((maxArc+minArc)/2)/state.R; centerX=W/2;
+ }
+ function projectPolar(a,h=0){let arc=normAng(a-centerAng)*(state.R+h);return [centerX+arc/scale,surface-h/scale]}
+ function project(p){return projectPolar(angOf(p),altOf(p))}
+
+ // Star field. In tracking view it drifts slowly opposite the camera rotation, providing a second reference frame.
+ x.fillStyle="#02070c";x.fillRect(0,0,W,H);
+ let starShift=finished?0:(centerAng*state.R/scale*.08);
+ for(let i=0;i<90;i++){
+   let sx=((i*197.3-starShift)% (W+80)+(W+80))%(W+80)-40;
+   let sy=28+((i*83.7)%Math.max(80,H*.62)); let rr=(i%11===0)?1.5:(i%4===0?.9:.55);
+   x.globalAlpha=(i%7===0)?.8:.42;x.fillStyle="#dbe9f2";x.beginPath();x.arc(sx,sy,rr,0,Math.PI*2);x.fill();
+ }
+ x.globalAlpha=1;
+
+ // Planet body.
+ x.fillStyle="#17384f";x.beginPath();x.arc(centerX,surface+state.R/scale,state.R/scale,0,Math.PI*2);x.fill();
+ if($("atmosphere").checked&&phase()>=4){x.strokeStyle="#43e0c966";x.lineWidth=10;x.beginPath();x.arc(centerX,surface+state.R/scale,state.R/scale+6,Math.PI,Math.PI*2);x.stroke()}
+
+ // Planet-surface reference features: subtle contour bands, irregular terrain, and moving ground markers.
+ // These are anchored to the planet so students can see the surface move beneath the tracking camera.
+ let worldSpacing=85000; // 85 km between surface markers
+ let arcCenter=centerAng*state.R;
+ x.save();x.beginPath();x.rect(0,surface-105,W,135);x.clip();
+
+ // Soft contour bands that follow the horizon; no vertical/diagonal "fence" lines.
+ for(let j=1;j<=3;j++){
+   let y=surface-j*18;
+   x.strokeStyle=`rgba(67,224,201,${0.10-j*.015})`;x.lineWidth=1;
+   x.beginPath();x.moveTo(0,y+5);x.quadraticCurveTo(centerX,y-7,W,y+5);x.stroke();
+ }
+
+ // Continuous irregular terrain silhouette, generated from world position so it scrolls smoothly with the planet.
+ let leftArc=arcCenter-(centerX+80)*scale, rightArc=arcCenter+(W-centerX+80)*scale;
+ let stepArc=Math.max(9000,scale*14), terrainPts=[];
+ for(let s=leftArc;s<=rightArc+stepArc;s+=stepArc){
+   let a=s/state.R,[tx]=projectPolar(a,0);
+   let n=(Math.sin(s/72000)+0.55*Math.sin(s/31000+1.7)+0.28*Math.sin(s/14500+0.4));
+   let ridge=Math.max(0,n)*10 + Math.max(0,Math.sin(s/185000+2.2))*7;
+   terrainPts.push([tx,surface-ridge]);
+ }
+ x.fillStyle="#102b3e";x.strokeStyle="#557b90aa";x.lineWidth=1;
+ x.beginPath();x.moveTo(terrainPts[0][0],surface+4);terrainPts.forEach(([tx,ty])=>x.lineTo(tx,ty));x.lineTo(terrainPts[terrainPts.length-1][0],surface+4);x.closePath();x.fill();x.stroke();
+
+ // Small world-anchored survey markers. Their motion makes the planet reference frame obvious without looking like a structure.
+ let first=Math.floor(leftArc/worldSpacing)*worldSpacing;
+ for(let s=first;s<=rightArc;s+=worldSpacing){
+   let a=s/state.R,[mx]=projectPolar(a,0);
+   x.strokeStyle="#78a9b977";x.lineWidth=1;x.beginPath();x.moveTo(mx,surface-1);x.lineTo(mx,surface-7);x.stroke();
+   x.fillStyle="#8fc3cf99";x.beginPath();x.arc(mx,surface-9,1.8,0,Math.PI*2);x.fill();
+ }
+ x.restore();
+
+ // Trajectory trail.
+ x.strokeStyle="#43e0c9";x.globalAlpha=.78;x.lineWidth=2;x.beginPath();let pen=false;
+ history.forEach(p=>{let [px,py]=project(p),visible=px>-80&&px<W+80&&py>-100&&py<H+100;if(visible){pen?x.lineTo(px,py):x.moveTo(px,py);pen=true}else pen=false});x.stroke();x.globalAlpha=1;
+
+ // Spacecraft.
+ let [px,py]=project([state.x,state.y]);x.save();x.translate(px,py);x.fillStyle="#f8f0df";x.beginPath();x.moveTo(0,-11);x.lineTo(9,8);x.lineTo(0,4);x.lineTo(-9,8);x.closePath();x.fill();let b=activeBurn(state.t);if(b){x.rotate(-b.angle);x.fillStyle="#ffbb4d";x.fillRect(-21,-2,15,4)}x.restore();
+ x.fillStyle="#a6b4c9";x.font="12px Arial";x.fillText(finished?"RESULT VIEW — COMPLETE TRAJECTORY":"TRACKING VIEW — CAMERA FOLLOWS SPACECRAFT",12,22);x.fillText("PLANET SURFACE",12,surface+18)
+}
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]))}
+function exportReport(){
+ let name=$("studentName")?.value.trim()||"Unnamed team";
+ let rows=trials.map(t=>{let v=t.values||{};let outcome=t.phase===1?"SURFACE IMPACT":(t.ok?"SURVIVED":"REVISE");return `<section class="trialcard"><h2>Trial ${t.n} — ${outcome}</h2><table><tr><th>Phase</th><td>${t.phase} ${esc(phaseNames[t.phase])}</td><th>Time</th><td>${t.time.toFixed(1)} s</td></tr><tr><th>Surface gravity</th><td>${esc(v.g)} m/s²</td><th>Altitude</th><td>${esc(v.alt)} km</td></tr><tr><th>Horizontal vx</th><td>${esc(v.vx)} m/s</td><th>Vertical vy</th><td>${esc(v.vy)} m/s</td></tr><tr><th>Final speed</th><td>${t.speed.toFixed(1)} m/s</td><th>Max/impact g</th><td>${t.g.toFixed(1)} g</td></tr></table><img src="${t.snapshot}" alt="Trajectory image for Trial ${t.n}"></section>`}).join("\n");
+ let html=`<!doctype html><html><head><meta charset="utf-8"><title>Emergency Landing Evidence — ${esc(name)}</title><style>body{font-family:Arial,sans-serif;max-width:1000px;margin:32px auto;padding:0 20px;color:#10212d}h1{margin-bottom:4px}.meta{color:#52636e}.trialcard{border:1px solid #b9c7cf;border-radius:12px;padding:16px;margin:22px 0;page-break-inside:avoid}table{border-collapse:collapse;width:100%;margin-bottom:12px}th,td{border:1px solid #ccd6dc;padding:7px;text-align:left}th{background:#edf3f6}img{display:block;max-width:100%;border:1px solid #9fb0ba;border-radius:8px;background:#02070c}.notes{white-space:pre-wrap;border:1px solid #ccd6dc;padding:14px;border-radius:10px}</style></head><body><h1>Emergency Landing — Mission Evidence</h1><div class="meta"><b>Name / team:</b> ${esc(name)}<br><b>Exported:</b> ${new Date().toLocaleString()}<br><b>Trials:</b> ${trials.length}</div>${rows||"<p>No completed trials were recorded.</p>"}<h2>Evidence / Revision Notes</h2><div class="notes">${esc($("notes").value)}</div></body></html>`;
+ let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([html],{type:"text/html"}));a.download=`Emergency_Landing_Evidence_${name.replace(/[^a-z0-9_-]+/gi,"_")}.html`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)
+}
+function clearTrials(){trials=[];trialNo=0;$("trials").innerHTML="";event("Trial history cleared.")}
+function saveConfig(){
+ let ids=["g","radius","alt","vx","vy","mass","dry","maxThrust","fuelRate","rho0","scaleH","Cd","area","safeV","safeG","crush"];
+ let o={phase:phase(),atmosphere:$("atmosphere").checked,values:{}};ids.forEach(id=>o.values[id]=$(id).value);
+ let a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,2)],{type:"application/json"}));a.download="Emergency_Landing_Class_Scenario.json";a.click()
+}
+function loadConfigFile(file){
+ let rd=new FileReader();rd.onload=()=>{
+   let o=JSON.parse(rd.result);
+   Object.entries(o.values||{}).forEach(([id,v])=>{if($(id))$(id).value=v});
+   $("atmosphere").checked=!!o.atmosphere;
+   setPhase(o.phase||1);
+   captureBaseMission();
+   $("run").textContent="RUN MISSION";
+   startFreshRun();
+   event("Class scenario loaded. RESET TO BASELINE will return to these starting conditions.");
+ };rd.readAsText(file)
+}
+window.onload=()=>{setPhase(parseInt($("phase").value));captureBaseMission();startFreshRun();$("run").onclick=run;$("reset").onclick=reset;$("burn").onclick=queueBurn;$("report").onclick=exportReport;if($("clearTrials"))$("clearTrials").onclick=clearTrials;
+ if($("saveCfg"))$("saveCfg").onclick=saveConfig;if($("loadCfg"))$("loadCfg").onchange=e=>{if(e.target.files[0])loadConfigFile(e.target.files[0])};
+}
+</script></body></html>
